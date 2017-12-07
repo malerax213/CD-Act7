@@ -29,32 +29,8 @@ public class RMIServerImplementation extends UnicastRemoteObject
     }
 
     @Override
-    public byte[] downloadFile(String title ,String caller) throws RemoteException {
+    public byte[] downloadFile(String title, String caller) throws RemoteException {
     	
-    	// CODE NOT TESTED
-    	try {
-			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/file/" + title + "/upload");
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setDoOutput(true);
-			connection.setRequestMethod("POST");
-			connection.setRequestProperty("Content-Type", "application/json");
-			 
-			Gson g = new Gson();
-	        String input = g.toJson(title);
-	        OutputStream os = connection.getOutputStream();
-	        os.write(input.getBytes());
-	        os.flush();
-            
-            int code = connection.getResponseCode();
-            
-            // An error occurred
-            if(code != HttpURLConnection.HTTP_CREATED){ 
-                throw new IOException();
-            }
-            
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
         File folder = new File("Storage-Server");
         String path = "Storage-Server";
         File[] listOfFiles = folder.listFiles();
@@ -113,6 +89,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
     @Override
     public void saveFile(byte[] buffer, String title, String user, String tags, 
             RMIClientInterface cinter) throws RemoteException {
+    	
         // The random ID is being generated each time a file is saved
         // on the server's folder
         String uniqueID = UUID.randomUUID().toString();
@@ -121,9 +98,9 @@ public class RMIServerImplementation extends UnicastRemoteObject
         String path = "Storage-Server/" + uniqueID + "/" + title;
 
         try {
-            // There's a file called "library" where all the information 
-            // about the uploads will be stored
-            addToLibrary(title, path, user, tags); 
+            // All the information about the uploads will be stored
+            // on the data base
+            addToDataBase(title, path, user, tags); 
         } catch (IOException ex) {
             Logger.getLogger(RMIServerImplementation.class.getName())
                     .log(Level.SEVERE, null, ex);
@@ -141,6 +118,38 @@ public class RMIServerImplementation extends UnicastRemoteObject
         }
     }
 
+    public void addToDataBase(String title, String path, String user, String tags) 
+    		throws IOException{
+    	 try {
+             URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/"+title+user+tags+"/upload");
+             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+             conn.setDoOutput(true);
+             conn.setRequestMethod("POST");
+             conn.setRequestProperty("Content-Type", "application/json");
+
+             String input = "title:"+title+", "+"path:"+path+", "+"user:"+user+", "+"tags:"+tags;
+             OutputStream os = conn.getOutputStream();
+             os.write(input.getBytes());
+             os.flush();
+             
+             int status = conn.getResponseCode();
+             System.out.println(status);
+             if(status != HttpURLConnection.HTTP_CREATED){ 
+                 throw new IOException();
+             }
+             
+             BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+ 			 String id = br.readLine();
+             conn.disconnect();
+             
+             System.out.println(id);
+             
+         } catch (IOException e) {
+             System.out.println(e.toString());
+         }  
+    }
+    
+    // NOT USED ANYMORE
     public void addToLibrary(String title, String path, String user, String tags) 
             throws IOException {
         // Adds the information about the upload to the registry file (library)

@@ -12,7 +12,9 @@ import javax.sql.DataSource;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import rmi.*;
@@ -39,18 +41,20 @@ public class WS {
 	}
 	
 	// CODE NOT TESTED
-	// POST a File
+	// POST a File to Database
 	@POST
-	@Path("/file")
-	public Response createFile(File file){
+	@Path("/{title}/{user}/{tags}/upload")
+	public Response addToDataBase(@PathParam("title") String title, String path, @PathParam("user") String user, @PathParam("tags") String tags) {
 		try {
 			Statement st = getStatement();
 			String id = UUID.randomUUID().toString();
 			
-			st.executeUpdate("INSERT INTO files(id, title, description, uploader, server) VALUES("
-							+ "'" + id + "'," 
-							+ "'" + file.getName() +  "');");
-			return Response. status(201).entity(id).build();
+			st.executeUpdate("INSERT INTO files(title, path, user, tags) VALUES("
+							+ "'" + title + "'," 
+							+ "'" + path +  "',"
+							+ "'" + user +  "'," 
+							+ "'" + tags +  "');");
+			return Response.status(201).entity(id).build();
 			
 		} catch (SQLException e) {
 			return Response.status(500).entity("Database ERROR").build();
