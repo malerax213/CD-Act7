@@ -87,20 +87,20 @@ public class RMIServerImplementation extends UnicastRemoteObject
     }
 
     @Override
-    public void saveFile(byte[] buffer, String title, String user, String tags, 
-            RMIClientInterface cinter) throws RemoteException {
+    public void saveFile(byte[] buffer, LocalFile f) throws RemoteException {
     	
         // The random ID is being generated each time a file is saved
         // on the server's folder
         String uniqueID = UUID.randomUUID().toString();
         File dir = new File("Storage-Server/" + uniqueID);
         dir.mkdir();
-        String path = "Storage-Server/" + uniqueID + "/" + title;
+        String path = "Storage-Server/" + uniqueID + "/" + f.getTitle();
 
         try {
             // All the information about the uploads will be stored
             // on the data base
-            addToDataBase(title, path, user, tags); 
+        	System.out.println("PINGUINO");
+            addToDataBase(f); 
         } catch (IOException ex) {
             Logger.getLogger(RMIServerImplementation.class.getName())
                     .log(Level.SEVERE, null, ex);
@@ -112,32 +112,37 @@ public class RMIServerImplementation extends UnicastRemoteObject
             Output.write(buffer, 0, buffer.length);
             Output.flush();
             Output.close();
-            notifyClients(cinter, title);
+            notifyClients(f.getUser(), f.getTitle());
         } catch (IOException e) {
             System.out.println("FileServer exception:" + e.getMessage());
         }
     }
 
-    public void addToDataBase(String title, String path, String user, String tags) 
+    public void addToDataBase(LocalFile f) 
     		throws IOException{
     	 try {
-             URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/"+title+user+tags+"/upload");
+             URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/upload"+f.getTitle());
              HttpURLConnection conn = (HttpURLConnection) url.openConnection();
              conn.setDoOutput(true);
              conn.setRequestMethod("POST");
              conn.setRequestProperty("Content-Type", "application/json");
-
-             String input = "title:"+title+", "+"path:"+path+", "+"user:"+user+", "+"tags:"+tags;
+             
+             String input = "title:"+f.getTitle()+", "+"path:"+f.getPath()+", "+"user:"+f.getUser()+", "+"tags:"+f.getTags();
+             System.out.println("PINGUINO4");
              OutputStream os = conn.getOutputStream();
+             System.out.println("PINGUINO5");
              os.write(input.getBytes());
+             System.out.println("PINGUINO6");
              os.flush();
+             System.out.println("PINGUINO7");
              
              int status = conn.getResponseCode();
              System.out.println(status);
+             System.out.println("PINGUINO8");
              if(status != HttpURLConnection.HTTP_CREATED){ 
                  throw new IOException();
              }
-             
+             System.out.println("PINGUINO9");
              BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
  			 String id = br.readLine();
              conn.disconnect();

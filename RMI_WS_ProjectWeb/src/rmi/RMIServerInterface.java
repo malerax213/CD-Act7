@@ -10,8 +10,7 @@ public interface RMIServerInterface extends Remote {
     public byte[] downloadFile(String content, String server)
             throws java.rmi.RemoteException;
 
-    public void saveFile(byte[] file, String title, String user, String tags, 
-            RMIClientInterface cinter)
+    public void saveFile(byte[] file, LocalFile f)
             throws java.rmi.RemoteException;
 
     public List searchFiles(String tags, String caller)

@@ -104,21 +104,21 @@ public class RMIClient {
         File[] listOfFiles = folder.listFiles();
         File objective;
         path = searchFile(listOfFiles, path, title);
+        LocalFile f = new LocalFile(title, cinter, path, tags);
 
         // If the path exists
         if (path != null) {
             objective = new File(path);
             byte buffer[] = new byte[(int) objective.length()];
-
             try {
                 // Reads the file
                 FileInputStream FIS = new FileInputStream(path);
                 BufferedInputStream input = new BufferedInputStream(FIS);
                 input.read(buffer, 0, buffer.length);
                 input.close();
-
+                
                 // Uploads it
-                inter.saveFile(buffer, title, user, tags, cinter);
+                inter.saveFile(buffer, f);
                 System.out.println("File " + title + " has been uploaded to the server\n");
             } catch (IOException e) {
                 System.out.println("FileServer exception:" + e.getMessage());
@@ -200,7 +200,7 @@ public class RMIClient {
         System.out.println("Insert the file you want to erase from the server:");
         Scanner reader = new Scanner(System.in);
         String file = reader.nextLine();
-
+        
         Boolean result;
         result = inter.deleteFile(file, user);
 

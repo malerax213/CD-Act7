@@ -43,17 +43,18 @@ public class WS {
 	// CODE NOT TESTED
 	// POST a File to Database
 	@POST
-	@Path("/{title}/{user}/{tags}/upload")
-	public Response addToDataBase(@PathParam("title") String title, String path, @PathParam("user") String user, @PathParam("tags") String tags) {
+	@Path("/{title}/upload")
+	public Response addToDataBase(@PathParam("title") String title, LocalFile f) {
 		try {
+			System.out.println("PENGUINBOY");
 			Statement st = getStatement();
 			String id = UUID.randomUUID().toString();
 			
 			st.executeUpdate("INSERT INTO files(title, path, user, tags) VALUES("
 							+ "'" + title + "'," 
-							+ "'" + path +  "',"
-							+ "'" + user +  "'," 
-							+ "'" + tags +  "');");
+							+ "'" + f.getPath() +  "',"
+							+ "'" + f.getUser() +  "'," 
+							+ "'" + f.getTags() +  "');");
 			return Response.status(201).entity(id).build();
 			
 		} catch (SQLException e) {
