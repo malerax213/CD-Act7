@@ -28,6 +28,7 @@ public class WS {
 	// Handles the data base
 	public Statement getStatement(){
 		try {
+			System.out.println("test");
 			InitialContext cxt = new InitialContext();
 			DataSource data = (DataSource) cxt.lookup("java:/PostgresXADS");
 			Connection connection = data.getConnection();
@@ -43,17 +44,17 @@ public class WS {
 	// CODE NOT TESTED
 	// POST a File to Database
 	@POST
-	@Path("/{title}/upload")
-	public Response addToDataBase(@PathParam("title") String title, LocalFile f) {
+	@Path("/upload")
+	public Response addToDataBase(LocalFile f) {
 		try {
 			System.out.println("PENGUINBOY");
 			Statement st = getStatement();
 			String id = UUID.randomUUID().toString();
 			
-			st.executeUpdate("INSERT INTO files(title, path, user, tags) VALUES("
-							+ "'" + title + "'," 
-							+ "'" + f.getPath() +  "',"
-							+ "'" + f.getUser() +  "'," 
+			st.executeUpdate("INSERT INTO files(title, user, path, tags) VALUES("
+							+ "'" + f.getTitle() + "'," 
+							+ "'" + f.getUser() +  "',"
+							+ "'" + f.getPath() +  "'," 
 							+ "'" + f.getTags() +  "');");
 			return Response.status(201).entity(id).build();
 			

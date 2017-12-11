@@ -112,7 +112,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
             Output.write(buffer, 0, buffer.length);
             Output.flush();
             Output.close();
-            notifyClients(f.getUser(), f.getTitle());
+            //notifyClients(f.getUser(), f.getTitle());
         } catch (IOException e) {
             System.out.println("FileServer exception:" + e.getMessage());
         }
@@ -121,24 +121,19 @@ public class RMIServerImplementation extends UnicastRemoteObject
     public void addToDataBase(LocalFile f) 
     		throws IOException{
     	 try {
-             URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/upload"+f.getTitle());
+             URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/upload/");
              HttpURLConnection conn = (HttpURLConnection) url.openConnection();
              conn.setDoOutput(true);
              conn.setRequestMethod("POST");
              conn.setRequestProperty("Content-Type", "application/json");
              
-             String input = "title:"+f.getTitle()+", "+"path:"+f.getPath()+", "+"user:"+f.getUser()+", "+"tags:"+f.getTags();
-             System.out.println("PINGUINO4");
+             String input = "{\"title\":\""+f.getTitle()+"\", \"user\":\""+f.getUser()+"\", \"path\":\""+f.getPath()+"\", \"tags\":\""+f.getTags()+"\"}";
              OutputStream os = conn.getOutputStream();
-             System.out.println("PINGUINO5");
              os.write(input.getBytes());
-             System.out.println("PINGUINO6");
              os.flush();
-             System.out.println("PINGUINO7");
              
              int status = conn.getResponseCode();
              System.out.println(status);
-             System.out.println("PINGUINO8");
              if(status != HttpURLConnection.HTTP_CREATED){ 
                  throw new IOException();
              }
