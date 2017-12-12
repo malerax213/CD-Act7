@@ -87,7 +87,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
     }
 
     @Override
-    public void saveFile(byte[] buffer, LocalFile f) throws RemoteException {
+    public void saveFile(byte[] buffer, LocalFile f, RMIClientImplementation cinter) throws RemoteException {
     	
         // The random ID is being generated each time a file is saved
         // on the server's folder
@@ -112,7 +112,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
             Output.write(buffer, 0, buffer.length);
             Output.flush();
             Output.close();
-            //notifyClients(f.getUser(), f.getTitle());
+            notifyClients(cinter, f.getTitle());
         } catch (IOException e) {
             System.out.println("FileServer exception:" + e.getMessage());
         }

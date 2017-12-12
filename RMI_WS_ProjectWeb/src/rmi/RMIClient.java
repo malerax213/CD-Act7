@@ -118,7 +118,7 @@ public class RMIClient {
                 input.close();
                 
                 // Uploads it
-                inter.saveFile(buffer, f);
+                inter.saveFile(buffer, f, cinter);
                 System.out.println("File " + title + " has been uploaded to the server\n");
             } catch (IOException e) {
                 System.out.println("FileServer exception:" + e.getMessage());
