@@ -9,13 +9,12 @@ public class LocalFile implements Serializable{
 	public String server;
 	public String tags;
 	
-	public LocalFile(){
-		
-	}
+	public LocalFile(){}
 	
-	public LocalFile(String title, String user, String id, String tags){
+	public LocalFile(String title, String user,String server, String id, String tags){
 		this.title = title;
 		this.user = user;
+		this.server = server;
 		this.id = id;
 		this.tags = tags;
 	}
@@ -58,6 +57,10 @@ public class LocalFile implements Serializable{
 	
 	public String getTags(){
 		return this.tags;
+	}
+	
+	public String getJson(){
+		return "{\"id\":\""+this.getId()+"\",\"title\":\""+this.getTitle()+"\", \"user\":\""+this.getUser()+"\", \"server\":\""+this.getServer()+"\", \"tags\":\""+this.getTags()+"\"}";
 	}
 	
 }
