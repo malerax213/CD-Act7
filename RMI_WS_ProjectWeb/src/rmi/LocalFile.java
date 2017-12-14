@@ -3,20 +3,29 @@ package rmi;
 import java.io.Serializable;
 
 public class LocalFile implements Serializable{
+	public String id;
 	public String title;
 	public String user;
-	public String path;
+	public String server;
 	public String tags;
 	
 	public LocalFile(){
 		
 	}
 	
-	public LocalFile(String title, String user, String path, String tags){
+	public LocalFile(String title, String user, String id, String tags){
 		this.title = title;
 		this.user = user;
-		this.path = path;
+		this.id = id;
 		this.tags = tags;
+	}
+	
+	public void setId(String id){
+		this.id = id;
+	}
+	
+	public String getId(){
+		return this.id;
 	}
 	
 	public void setTitle(String title){
@@ -35,12 +44,12 @@ public class LocalFile implements Serializable{
 		return this.user;
 	}
 	
-	public void setPath(String path){
-		this.path = path;
+	public void setServer(String server){
+		this.server = server;
 	}
 	
-	public String getPath(){
-		return this.path;
+	public String getServer(){
+		return this.server;
 	}
 	
 	public void setTags(String tags){
