@@ -104,7 +104,7 @@ public class RMIClient {
         File[] listOfFiles = folder.listFiles();
         File objective;
         path = searchFile(listOfFiles, path, title);
-        LocalFile f = new LocalFile(title, "patata", path, tags);
+        LocalFile f = new LocalFile(title, user, "test", "test", tags); //ARREGLAR ESTA LINEA
 
         // If the path exists
         if (path != null) {

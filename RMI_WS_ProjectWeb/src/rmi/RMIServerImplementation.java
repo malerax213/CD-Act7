@@ -87,7 +87,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
     }
 
     @Override
-    public void saveFile(byte[] buffer, LocalFile f, RMIClientImplementation cinter) throws RemoteException {
+    public void saveFile(byte[] buffer, LocalFile f, RMIClientInterface cinter) throws RemoteException {
     	
         // The random ID is being generated each time a file is saved
         // on the server's folder
@@ -127,9 +127,8 @@ public class RMIServerImplementation extends UnicastRemoteObject
              conn.setRequestMethod("POST");
              conn.setRequestProperty("Content-Type", "application/json");
              
-             String input = "{\"title\":\""+f.getTitle()+"\", \"user\":\""+f.getUser()+"\", \"path\":\""+f.getPath()+"\", \"tags\":\""+f.getTags()+"\"}";
              OutputStream os = conn.getOutputStream();
-             os.write(input.getBytes());
+             os.write(f.getJson().getBytes());
              os.flush();
              
              int status = conn.getResponseCode();
@@ -142,7 +141,6 @@ public class RMIServerImplementation extends UnicastRemoteObject
  			 String id = br.readLine();
              conn.disconnect();
              
-             System.out.println(id);
              
          } catch (IOException e) {
              System.out.println(e.toString());

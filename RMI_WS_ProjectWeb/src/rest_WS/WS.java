@@ -27,40 +27,65 @@ public class WS {
 	
 	// Handles the data base
 	public Statement getStatement(){
+		String strResultado;
 		try {
-			System.out.println("test");
 			InitialContext cxt = new InitialContext();
-			DataSource data = (DataSource) cxt.lookup("java:/PostgresXADS");
-			Connection connection = data.getConnection();
-			Statement statement = connection.createStatement();
-			return statement;
-				
-		} catch (Exception e) {
-			System.out.println("DB not loaded");
-			return null;
+			DataSource ds = (DataSource) cxt.lookup("java:/PostgresXADS");
+			if (ds == null){
+				strResultado ="KO.DataSource";
+			}
+			else
+			{
+				Connection connection = ds.getConnection();
+				Statement st = connection.createStatement();
+				System.out.println("Devolvemos boy");
+				return st;
+				//connection.close();
+				//st.close();
+			}
+		}catch(Exception e){ e.printStackTrace(); strResultado="KO.SQL " + e.getMessage(); 
 		}
+			//DataSource data = (DataSource) cxt.lookup("java:/PostgresXADS");
+			//Connection connection = data.getConnection();
+			//Statement statement = connection.createStatement();
+			//return statement;
+		return null;
+				
+		//} catch (Exception e) {
+			//System.out.println("DB not loaded");
+			//return null;
+		//}
 	}
 	
 	// CODE NOT TESTED
 	// POST a File to Database
 	@POST
 	@Path("/upload")
-	public Response addToDataBase(LocalFile f) {
-		try {
-			System.out.println("PENGUINBOY");
+	public Response addToDataBase(LocalFile f) throws SQLException {
+		//try {
 			Statement st = getStatement();
 			String id = UUID.randomUUID().toString();
+			System.out.println("We reached it :D");
 			
-			st.executeUpdate("INSERT INTO files(title, user, path, tags) VALUES("
-							+ "'" + f.getTitle() + "'," 
-							+ "'" + f.getUser() +  "',"
-							+ "'" + f.getPath() +  "'," 
-							+ "'" + f.getTags() +  "');");
+			try{
+				st.executeUpdate("INSERT INTO files(title, tags, server, ids, users) VALUES ("
+						+ "'" + f.getTitle() + "'," 
+						+ "'" + f.getTags() +  "',"
+						+ "'" + f.getServer() +  "'," 
+						+ "'" + f.getId() +  "',"
+						+ "'" + f.getUser() + "');");
+			} catch (Exception e) { 
+	            System.err.println("Got an exception! "); 
+	            System.err.println(e.getMessage()); 
+	        } 
+
+			System.out.println("done boy");
+			st.close();
 			return Response.status(201).entity(id).build();
 			
-		} catch (SQLException e) {
-			return Response.status(500).entity("Database ERROR").build();
-		}
+		//} catch (SQLException e) {
+			//return Response.status(500).entity("Database ERROR").build();
+		//}
 	}
 
 }

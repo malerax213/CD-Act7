@@ -11,7 +11,7 @@ public class LocalFile implements Serializable{
 	
 	public LocalFile(){}
 	
-	public LocalFile(String title, String user,String server, String id, String tags){
+	public LocalFile(String title, String user, String server, String id, String tags){
 		this.title = title;
 		this.user = user;
 		this.server = server;
