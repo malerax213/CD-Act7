@@ -10,7 +10,6 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gson.Gson;
 
 /**
  * This class implements the remote interface RMIServerInterface.
@@ -22,7 +21,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
     Map<RMIClientInterface, String> clients = new HashMap<>();
     // Will contain all the servers
     Map<RMIServerInterface, String> servers = new HashMap<>();
-    String Name;
+    ServerClass server;
     
     public RMIServerImplementation() throws RemoteException {
         super();
@@ -57,7 +56,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
         for(Map.Entry<RMIServerInterface,String> server : servers.entrySet()){
             if(!server.getValue().equals(caller)){
                 System.out.println("Searching in Server:" + server);
-                buffer = server.getKey().downloadFile(title, Name);
+                buffer = server.getKey().downloadFile(title, this.server.name);
             }
             if (buffer != null){
                 return buffer;
@@ -239,7 +238,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
         for(Map.Entry<RMIServerInterface,String> server : servers.entrySet()){
             if(!server.getValue().equals(caller)){
                 System.out.println("Searching Tags in Server:" + server);
-                result.addAll(server.getKey().searchFiles(tags, Name));
+                result.addAll(server.getKey().searchFiles(tags, this.server.name));
             }
         }      
         return result;
@@ -297,13 +296,33 @@ public class RMIServerImplementation extends UnicastRemoteObject
     }
     
     @Override
-    public void registerServer(RMIServerInterface server, String Name) 
-            throws RemoteException{
-        // If the server isn't on the servers Map, we add it
-        if(!this.servers.containsKey(server)){
-            servers.put(server, Name);
-            server.registerServer(this, Name);
-        }
+    public void registerServer() {
+	    try {
+	        URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/servers/");
+	        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+	        conn.setDoOutput(true);
+	        conn.setRequestMethod("POST");
+	        conn.setRequestProperty("Content-Type", "application/json");
+	        
+	        String input = server.getJson();
+	        OutputStream os = conn.getOutputStream();
+	        os.write(input.getBytes());
+	        os.flush();
+	        
+	        System.out.println("Server?");
+	        
+	        int status = conn.getResponseCode();
+	        System.out.println(status);
+	        if(status != HttpURLConnection.HTTP_CREATED){ 
+	            throw new IOException();
+	        }
+	        conn.disconnect();
+	        System.out.println("Server registered");
+	        
+	    } catch (IOException e) {
+	        System.out.println(e.toString());
+	    }  
+
 
     }
     

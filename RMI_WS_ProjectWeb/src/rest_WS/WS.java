@@ -27,34 +27,18 @@ public class WS {
 	
 	// Handles the data base
 	public Statement getStatement(){
-		String strResultado;
 		try {
+			System.out.println("test");
 			InitialContext cxt = new InitialContext();
-			DataSource ds = (DataSource) cxt.lookup("java:/PostgresXADS");
-			if (ds == null){
-				strResultado ="KO.DataSource";
-			}
-			else
-			{
-				Connection connection = ds.getConnection();
-				Statement st = connection.createStatement();
-				System.out.println("Devolvemos boy");
-				return st;
-				//connection.close();
-				//st.close();
-			}
-		}catch(Exception e){ e.printStackTrace(); strResultado="KO.SQL " + e.getMessage(); 
-		}
-			//DataSource data = (DataSource) cxt.lookup("java:/PostgresXADS");
-			//Connection connection = data.getConnection();
-			//Statement statement = connection.createStatement();
-			//return statement;
-		return null;
+			DataSource data = (DataSource) cxt.lookup("java:/PostgresXADS");
+			Connection connection = data.getConnection();
+			Statement statement = connection.createStatement();
+			return statement;
 				
-		//} catch (Exception e) {
-			//System.out.println("DB not loaded");
-			//return null;
-		//}
+		} catch (Exception e) {
+			System.out.println("DB not loaded");
+			return null;
+		}
 	}
 	
 	// CODE NOT TESTED
@@ -88,4 +72,24 @@ public class WS {
 		//}
 	}
 
+	@POST
+	@Path("/servers")
+	public Response postServer(ServerClass s) {
+		try {
+			System.out.println("testservers");
+			Statement st = getStatement();
+			String id = UUID.randomUUID().toString();
+			
+			st.executeUpdate("INSERT INTO servers(name, ip, port) VALUES("
+							+ "'" + s.getName() + "'," 
+							+ "'" + s.getIp() +  "',"
+							+ "'" + s.getPort() +  "');");
+			return Response.status(201).entity(id).build();
+			
+		} catch (SQLException e) {
+			return Response.status(500).entity("Database ERROR").build();
+		}
+	}
+	
+	
 }

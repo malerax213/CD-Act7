@@ -8,7 +8,9 @@ import java.rmi.registry.Registry;
 import java.util.Scanner;
 
 public class RMIServer {
-    static String Name;
+    static String name;
+    static String ip;
+    static String port;
             
     public static void main(String args[]) throws IOException {
         File dir = new File("Storage-Server");
@@ -23,7 +25,7 @@ public class RMIServer {
         
         try {
             RMIServerImplementation self = confServer();
-            joinDS(self);
+            self.registerServer();
         } catch (Exception ex) {
             System.out.println("An error has been found\n" + ex);
         }
@@ -36,25 +38,25 @@ public class RMIServer {
         Scanner reader = new Scanner(System.in);
         
         System.out.println("Enter the name of this Server:");
-        Name = reader.nextLine();
+        name = reader.nextLine();
         
         System.out.println("Enter IP address: (you can write localhost "
                 + "to use the default one)");
-        IP = reader.nextLine();
+        ip = reader.nextLine();
 
         System.out.println("Enter the port of the server:");
-        portNum = reader.nextLine();
+        port = reader.nextLine();
 
         // The hostname of the machine is being set
-        System.setProperty("java.rmi.server.hostname", IP);
+        System.setProperty("java.rmi.server.hostname", ip);
         RMIServerImplementation exportedObj = new RMIServerImplementation();
-        startRegistry(Integer.parseInt(portNum));
+        startRegistry(Integer.parseInt(port));
             
         // Registers the object under the name â€œsomeâ€?
-        String registryURL = "rmi://" + IP + ":" + portNum + "/some";
+        String registryURL = "rmi://" + ip + ":" + port + "/some";
         Naming.rebind(registryURL, exportedObj);
         System.out.println("Server ready.\n");
-        exportedObj.Name = Name;
+        exportedObj.server = new ServerClass(name,ip,port);
         return exportedObj;
     }
     
@@ -74,25 +76,4 @@ public class RMIServer {
         }
     }
     
-    public static void joinDS(RMIServerImplementation self) 
-            throws RemoteException, NotBoundException, MalformedURLException {
-        // Handles the connection between multiple servers
-        String portNum;
-        String IP;
-        Scanner reader = new Scanner(System.in);
-
-        System.out.println("Do you want to connect with an already active system?");
-        String s = reader.nextLine();
-        if("y".equals(s) || "yes".equals(s)){
-            System.out.println("Enter the IP of the server:");
-            IP = reader.nextLine();
-            
-            System.out.println("Enter the port of the server:");
-            portNum = reader.nextLine();
-            
-            String registryURL = "rmi://" + IP + ":" + portNum + "/some";
-            RMIServerInterface inter = (RMIServerInterface) Naming.lookup(registryURL);
-            inter.registerServer(self, Name);
-        }
-    }
 }

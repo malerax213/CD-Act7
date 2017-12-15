@@ -37,4 +37,7 @@ public class ServerClass {
 		return this.port;
 	}
 	
+	public String getJson(){
+		return "{\"name\":\""+this.getName()+"\",\"ip\":\""+this.getIp()+"\", \"port\":\""+this.getPort()+"\"}";
+	}
 }
