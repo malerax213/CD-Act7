@@ -11,6 +11,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -61,7 +62,6 @@ public class WS {
 	            System.err.println(e.getMessage()); 
 	        } 
 
-			System.out.println("done boy");
 			st.close();
 			return Response.status(201).entity(id).build();
 
@@ -79,7 +79,6 @@ public class WS {
 							+ "'" + s.getName() + "'," 
 							+ "'" + s.getIp() +  "',"
 							+ "'" + s.getPort() +  "');");
-			System.out.println("Server post done");
 			return Response.status(201).entity(id).build();
 			
 		} catch (SQLException e) {
@@ -128,10 +127,55 @@ public class WS {
 			st.executeUpdate("INSERT INTO users(name,pass) VALUES("
 							+ "'" + user.getTitle() + "'," 
 							+ "'" + user.getUser() + "');");
-			return Response. status(201).build();
+			return Response.status(201).build();
 			
 		} catch (SQLException e) {
 			return Response.status(500).entity("Database ERROR").build();
+		}
+	}
+	
+	// DELETE FILE by Title
+	@DELETE
+	@Path("/file/{title}/delete")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteFile(@PathParam("title") String title){
+		try{
+			Statement st = getStatement();
+			st.executeUpdate("DELETE FROM files WHERE title = '" + title + "';");
+			st.close();
+			return Response.status(204).build();
+			
+		}catch(SQLException ex){
+			return Response.status(500).entity("Database ERROR").build();
+		}
+	}
+	
+	// GET FILE by TITLE
+	@GET
+	@Path("/file/{title}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getVideo(@PathParam("title") String title){	 
+		try {
+			Statement st = getStatement();
+			ResultSet rs = st.executeQuery("SELECT tags, title, server, ids, users FROM files "
+					+ "WHERE title='" + title + "';");
+			LocalFile f = new LocalFile();
+			if(!rs.isBeforeFirst()){
+				return Response.status(404).entity("File not found").build();
+			}else{
+				rs.next();
+				f.setTitle(title);
+				f.setId(rs.getString("ids"));
+				f.setUser(rs.getString("users"));
+				f.setServer(rs.getString("server"));
+				f.setTags(rs.getString("tags"));
+			}
+			
+			st.close();
+			return Response.status(200).entity(f).build();
+			
+		} catch (SQLException e) {
+			return Response.status(500).entity("Database ERROR" + e.toString()).build();
 		}
 	}
 	

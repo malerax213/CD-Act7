@@ -18,9 +18,18 @@ public interface RMIServerInterface extends Remote {
 
     public Boolean deleteFile(String file, String user)
             throws java.rmi.RemoteException;
+    
+    public int deleteFileByTitle(String file)
+    		throws java.rmi.RemoteException;
 
     public void registerClient(RMIClientInterface client, String userName, String pass)
             throws java.rmi.RemoteException;
+    
+    public int registerUser(UserClass user)
+    		throws java.rmi.RemoteException;
+    
+    public UserClass getUser(String name)
+    		throws java.rmi.RemoteException;
 
     public void disconnect(RMIClientInterface client)
             throws java.rmi.RemoteException;

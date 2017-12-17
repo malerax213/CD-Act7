@@ -133,7 +133,6 @@ public class RMIServerImplementation extends UnicastRemoteObject
              os.flush();
              
              int status = conn.getResponseCode();
-             System.out.println(status);
              if(status != HttpURLConnection.HTTP_CREATED){ 
                  throw new IOException();
              }
@@ -247,55 +246,85 @@ public class RMIServerImplementation extends UnicastRemoteObject
     
     @Override
     public Boolean deleteFile(String file, String user){
-        // Handles the delete of the files
-        Map<String, ArrayList> library = new HashMap<>();
-        try {
-            library = readLibrary();
-            if (library.containsKey(file)){
-                ArrayList info;
-                info = library.get(file);
-                if(String.valueOf(info.get(1)).equals(user)){
-                    System.out.println("Eliminated:"+String.valueOf(info.get(2)));
+        // Handles the delete of the files.
+        // If the file is in the DB
+    	LocalFile f = getFile(file);
+        if (f.getTitle().equals(file)){
+        	System.out.println("entro2");
+            System.out.println("Eliminated: "+f.getTitle());
 
-                    File tmp = new File(String.valueOf(info.get(2)));
-                    tmp.delete();
-                    
-                    String path = String.valueOf(info.get(2)).replace("/"+file,"");
-                    tmp = new File(path);
-                    tmp.delete();
-                    
-                    // The registry file (library) is being updated with the changes
-                    library.remove(file);
-                    updateLibrary(library);
-                    
-                    return true;
-                }
-            return false; 
-            }        
+            File tmp = new File(f.getTitle());
+            tmp.delete();
+            
+            // FALTA ARREGLAR ESTAS LINEAS
+            //String path = String.valueOf(info.get(2)).replace("/"+file,"");
+            //tmp = new File(path);
+            //tmp.delete();
+            
+            // Deleting the file from the data base
+            if(deleteFileByTitle(file) == 0){
+            	System.out.println("Deleted successfully from DB");
+            	return true;
+            }else{
+            	System.out.println("An error has occured while deleting from the DB");
+            	return false;
+            }
+            
+          }else{
+        	  System.out.println("The file is not in the DB");
+        	  return false;
+          }
+
+    }
+    
+    @Override
+    public int deleteFileByTitle(String title){
+        try {
+            URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/file/" + title + "/delete");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setDoOutput(true);
+            conn.setRequestMethod("DELETE");
+            conn.setRequestProperty("Content-Type", "application/json");
+
+            int status = conn.getResponseCode();
+            conn.disconnect();
+            if(status != 204){ 
+                    return 1;
+            }
+            return 0;
+        
         } catch (IOException ex) {
-            Logger.getLogger(RMIServerImplementation.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
-        return false;
+        	return 1;
+        }  
     }
     
     @Override
     public void registerClient(RMIClientInterface client, String userName, String pass) 
             throws RemoteException{
-    	UserClass userFromDB = getUser(userName);
     	
-        if (userFromDB == null){
+    	int code = registerUser(new UserClass(userName,pass));
+    	
+    	// If it is a new user
+        if (code == 0){
         	UserClass user = new UserClass(userName, pass);
             registerUser(user);
+            clients.put(client, userName);
             client.sendMessage("Registered successfully with user: " + userName);
             System.out.println("User registed with user name: " + userName);
-        }else{
+            
+        }else if(code == 1){
         	 // If the username is already taken or already registered
-            client.sendMessage("The user is already used or registered");
+            client.sendMessage("Welcome back! " + userName);
+            System.out.println("User " + userName + " found in the database.");
+            
+        }else if(code == 2){
+        	// If an error has occured
+            client.sendMessage("Register failed, restart the client");
         }
 
     }
     
+    @Override
     public int registerUser(UserClass user) {
     	try{
 	    	URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/user");
@@ -316,12 +345,11 @@ public class RMIServerImplementation extends UnicastRemoteObject
 	        
 	        if(status != HttpURLConnection.HTTP_CREATED){ 
 	            if(status == 409)
-	                return 400;
-	            return 500;
+	                return 1;
+	            return 2;
 	        }
 	        
-	        return 0;
-        
+	        return 0;  
     
     	} catch (IOException e) {
 	        System.out.println(e.toString());
@@ -360,25 +388,44 @@ public class RMIServerImplementation extends UnicastRemoteObject
     public UserClass getUser(String name){
 		try {
 			
-			URL url = new URL ("http://localhost:8080/RRMI_WS_ProjectWeb/rest/user/" + name);
+			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/user/" + name);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
-		
 			if(conn.getResponseCode() != 200)
 				return null;
 			
 			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			String output = br.readLine();
 			conn.disconnect();
-			
 			Gson g = new Gson();
 			UserClass user = g.fromJson(output, UserClass.class);
-			
 			return user;
 					
-		} catch (Exception e) { return null; }
+		} catch (Exception e) { 
+			return null; 
+		}
 	}
+    
+    public LocalFile getFile(String title){
+    	try {
+			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/file/" + title);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
+			if(conn.getResponseCode() != 200)
+				return new LocalFile("","","","","");
+			
+			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			String output = br.readLine();
+			conn.disconnect();
+			
+			Gson g = new Gson();
+			LocalFile f = g.fromJson(output, LocalFile.class);
+			return f;
+					
+		} catch (Exception e) { return null; }
+    }
     
     public void notifyClients(RMIClientInterface client, String title) 
             throws RemoteException{
