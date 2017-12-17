@@ -43,7 +43,9 @@ public class RMIClient {
         // Client is being registered to the server
         System.out.println("Enter your user Name:");
         String user = reader.nextLine();
-        inter.registerClient(cinter, user);
+        System.out.println("Enter your pass");
+        String pass = reader.nextLine();
+        inter.registerClient(cinter, user, pass);
 
         // All the client's actions will be handled on this loop
         while (true) {

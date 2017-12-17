@@ -27,5 +27,4 @@ public class UserClass {
 		return this.pass;
 	}
 	
-	
 }

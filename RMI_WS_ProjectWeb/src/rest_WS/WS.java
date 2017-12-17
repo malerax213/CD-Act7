@@ -2,6 +2,7 @@ package rest_WS;
 
 import java.io.File;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.UUID;
@@ -10,6 +11,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -28,7 +30,6 @@ public class WS {
 	// Handles the data base
 	public Statement getStatement(){
 		try {
-			System.out.println("test");
 			InitialContext cxt = new InitialContext();
 			DataSource data = (DataSource) cxt.lookup("java:/PostgresXADS");
 			Connection connection = data.getConnection();
@@ -41,7 +42,6 @@ public class WS {
 		}
 	}
 	
-	// CODE NOT TESTED
 	// POST a File to Database
 	@POST
 	@Path("/upload")
@@ -49,7 +49,6 @@ public class WS {
 		//try {
 			Statement st = getStatement();
 			String id = UUID.randomUUID().toString();
-			System.out.println("We reached it :D");
 			
 			try{
 				st.executeUpdate("INSERT INTO files(title, tags, server, ids, users) VALUES ("
@@ -58,25 +57,21 @@ public class WS {
 						+ "'" + f.getServer() +  "'," 
 						+ "'" + f.getId() +  "',"
 						+ "'" + f.getUser() + "');");
-			} catch (Exception e) { 
-	            System.err.println("Got an exception! "); 
+			} catch (Exception e) {  
 	            System.err.println(e.getMessage()); 
 	        } 
 
 			System.out.println("done boy");
 			st.close();
 			return Response.status(201).entity(id).build();
-			
-		//} catch (SQLException e) {
-			//return Response.status(500).entity("Database ERROR").build();
-		//}
+
 	}
 
+	// POST a Server to database
 	@POST
 	@Path("/servers")
 	public Response postServer(ServerClass s) {
 		try {
-			System.out.println("testservers");
 			Statement st = getStatement();
 			String id = UUID.randomUUID().toString();
 			
@@ -84,6 +79,7 @@ public class WS {
 							+ "'" + s.getName() + "'," 
 							+ "'" + s.getIp() +  "',"
 							+ "'" + s.getPort() +  "');");
+			System.out.println("Server post done");
 			return Response.status(201).entity(id).build();
 			
 		} catch (SQLException e) {
@@ -91,5 +87,52 @@ public class WS {
 		}
 	}
 	
+	// GET USER
+	@GET
+	@Path("/user/{name}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getUser(@PathParam("name") String name){	 
+		try {
+			Statement state = getStatement();
+			ResultSet resset = state.executeQuery("SELECT name,pass FROM users "
+					+ "WHERE name='" + name + "';");
+			UserClass user = new UserClass();
+			
+			if(!resset.isBeforeFirst())
+				return Response.status(404).entity("User not found").build();
+			else{
+				resset.next();
+				user.setTitle(resset.getString("name"));
+				user.setUser(resset.getString("pass"));
+			}
+			
+			state.close();
+			return Response.status(200).entity(user).build();
+			
+		} catch (SQLException e) {
+			return Response.status(500).entity("Database ERROR" + e.toString()).build();
+		}
+	}
+	
+	// POST USER
+	@POST
+	@Path("/user")
+	public Response createUser(UserClass user){
+		try {
+			Statement st = getStatement();
+			ResultSet rs = st.executeQuery("SELECT name FROM users "
+					+ "WHERE name='" + user.getTitle() + "';");
+			if (rs.isBeforeFirst())
+				return Response.status(409).entity("Name already in use").build();
+			
+			st.executeUpdate("INSERT INTO users(name,pass) VALUES("
+							+ "'" + user.getTitle() + "'," 
+							+ "'" + user.getUser() + "');");
+			return Response. status(201).build();
+			
+		} catch (SQLException e) {
+			return Response.status(500).entity("Database ERROR").build();
+		}
+	}
 	
 }

@@ -9,6 +9,9 @@ import java.rmi.server.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.google.gson.Gson;
+
+import javax.ws.rs.core.MediaType;
 
 
 /**
@@ -98,7 +101,6 @@ public class RMIServerImplementation extends UnicastRemoteObject
         try {
             // All the information about the uploads will be stored
             // on the data base
-        	System.out.println("PINGUINO");
             addToDataBase(f); 
         } catch (IOException ex) {
             Logger.getLogger(RMIServerImplementation.class.getName())
@@ -135,7 +137,6 @@ public class RMIServerImplementation extends UnicastRemoteObject
              if(status != HttpURLConnection.HTTP_CREATED){ 
                  throw new IOException();
              }
-             System.out.println("PINGUINO9");
              BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
  			 String id = br.readLine();
              conn.disconnect();
@@ -279,20 +280,53 @@ public class RMIServerImplementation extends UnicastRemoteObject
     }
     
     @Override
-    public void registerClient(RMIClientInterface client, String userName) 
+    public void registerClient(RMIClientInterface client, String userName, String pass) 
             throws RemoteException{
-        if(this.clients.containsKey(client))
-            // If the client is already registered
-            client.sendMessage("Client already registered");
-        else if(this.clients.containsValue(userName))
-            // If the username is already taken
-            client.sendMessage("The user is already used");
-        else {
-            // If it's a new client, we add it to our Map and we send the message to the client
-            clients.put(client, userName);
+    	UserClass userFromDB = getUser(userName);
+    	
+        if (userFromDB == null){
+        	UserClass user = new UserClass(userName, pass);
+            registerUser(user);
             client.sendMessage("Registered successfully with user: " + userName);
             System.out.println("User registed with user name: " + userName);
+        }else{
+        	 // If the username is already taken or already registered
+            client.sendMessage("The user is already used or registered");
         }
+
+    }
+    
+    public int registerUser(UserClass user) {
+    	try{
+	    	URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/user");
+	        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+	        conn.setDoOutput(true);
+	        conn.setRequestMethod("POST");
+	        conn.setRequestProperty("Content-Type", "application/json");
+	
+	        Gson g = new Gson();
+	        String input = g.toJson(user);
+	
+	        OutputStream os = conn.getOutputStream();
+	        os.write(input.getBytes());
+	        os.flush();
+	
+	        int status = conn.getResponseCode();
+	        conn.disconnect();
+	        
+	        if(status != HttpURLConnection.HTTP_CREATED){ 
+	            if(status == 409)
+	                return 400;
+	            return 500;
+	        }
+	        
+	        return 0;
+        
+    
+    	} catch (IOException e) {
+	        System.out.println(e.toString());
+	        return 300;
+	    }   
     }
     
     @Override
@@ -312,7 +346,6 @@ public class RMIServerImplementation extends UnicastRemoteObject
 	        System.out.println("Server?");
 	        
 	        int status = conn.getResponseCode();
-	        System.out.println(status);
 	        if(status != HttpURLConnection.HTTP_CREATED){ 
 	            throw new IOException();
 	        }
@@ -322,22 +355,43 @@ public class RMIServerImplementation extends UnicastRemoteObject
 	    } catch (IOException e) {
 	        System.out.println(e.toString());
 	    }  
-
-
     }
+    
+    public UserClass getUser(String name){
+		try {
+			
+			URL url = new URL ("http://localhost:8080/RRMI_WS_ProjectWeb/rest/user/" + name);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
+		
+			if(conn.getResponseCode() != 200)
+				return null;
+			
+			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			String output = br.readLine();
+			conn.disconnect();
+			
+			Gson g = new Gson();
+			UserClass user = g.fromJson(output, UserClass.class);
+			
+			return user;
+					
+		} catch (Exception e) { return null; }
+	}
     
     public void notifyClients(RMIClientInterface client, String title) 
             throws RemoteException{
-        List<RMIClientInterface> clients_interface = 
-                new ArrayList<>(clients.keySet());
-        
-        // We iterate through all the clients
-        for(RMIClientInterface cl: clients_interface){
-            if(!cl.equals(client))
-                cl.sendMessage("New File Uploaded: "+title);
-        }
-    }
-    
+	        List<RMIClientInterface> clients_interface = 
+	                new ArrayList<>(clients.keySet());
+	        
+	        // We iterate through all the clients
+	        for(RMIClientInterface cl: clients_interface){
+	            if(!cl.equals(client))
+	                cl.sendMessage("New File Uploaded: "+title);
+	        }
+    }  
+
     public void disconnect(RMIClientInterface client) throws RemoteException{
         // Removes the client from the clients Map
         System.out.println("Client " + clients.get(client) + " --> disconnected");
