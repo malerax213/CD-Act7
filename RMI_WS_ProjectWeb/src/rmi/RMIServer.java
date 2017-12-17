@@ -7,6 +7,8 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Scanner;
 
+import typeClass.ServerClass;
+
 public class RMIServer {
     static String name;
     static String ip;
@@ -15,13 +17,6 @@ public class RMIServer {
     public static void main(String args[]) throws IOException {
         File dir = new File("Storage-Server");
         dir.mkdir();
-        
-        dir = new File("Storage-Server/config");
-        dir.mkdir();
-        
-        // The registry file is being created
-        File config = new File("Storage-Server/config/library");
-        config.createNewFile();
         
         try {
             RMIServerImplementation self = confServer();

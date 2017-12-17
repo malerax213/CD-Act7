@@ -9,6 +9,8 @@ import java.rmi.registry.Registry;
 import java.util.List;
 import java.util.Scanner;
 
+import typeClass.LocalFile;
+
 public class RMIClient {
 
     public static void main(String args[]) throws RemoteException, 
@@ -159,7 +161,7 @@ public class RMIClient {
         System.out.println("Insert the title of the file you want:");
         input = reader.nextLine();
         String path = "Storage-Client/" + input;
-        byte[] file = inter.downloadFile(input,null);
+        byte[] file = inter.downloadFile(input);
 
         if (file == null) {
             System.out.println("The file hasn't been found\n");
@@ -184,7 +186,7 @@ public class RMIClient {
 
         Scanner reader = new Scanner(System.in);
         String tags = reader.nextLine();
-        List<String> result = inter.searchFiles(tags,null);
+        List<String> result = inter.searchFiles(tags);
 
         System.out.println("List of contents related to the entered tag:");
         if (!result.isEmpty()) {

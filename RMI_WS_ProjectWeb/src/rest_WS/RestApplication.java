@@ -1,4 +1,4 @@
-package rest;
+package rest_WS;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;

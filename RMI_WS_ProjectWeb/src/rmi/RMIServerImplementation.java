@@ -11,19 +11,21 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.google.gson.Gson;
 
+import typeClass.LocalFile;
+import typeClass.ServerClass;
+import typeClass.UserClass;
+
 import javax.ws.rs.core.MediaType;
 
 
 /**
  * This class implements the remote interface RMIServerInterface.
  */
-public class RMIServerImplementation extends UnicastRemoteObject 
-        implements RMIServerInterface {
+public class RMIServerImplementation extends UnicastRemoteObject implements RMIServerInterface {
 
-    // Will contain all the clients
-    Map<RMIClientInterface, String> clients = new HashMap<>();
-    // Will contain all the servers
-    Map<RMIServerInterface, String> servers = new HashMap<>();
+	private static final long serialVersionUID = 1L;
+	Map<RMIClientInterface, String> clients = new HashMap<>();    // Will contain all the clients
+    Map<RMIServerInterface, String> servers = new HashMap<>();    // Will contain all the servers
     ServerClass server;
     
     public RMIServerImplementation() throws RemoteException {
@@ -31,14 +33,25 @@ public class RMIServerImplementation extends UnicastRemoteObject
     }
 
     @Override
-    public byte[] downloadFile(String title, String caller) throws RemoteException {
-    	
+    public byte[] downloadFile(String title) {
+        byte buffer[] = null;
+        LocalFile f = getFile(title);
+        ServerClass s = getServer(f.server);
+        try {
+			return getRMIserver(s).downloadFileFinal(title);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		return null;
+    }
+    
+    public byte[] downloadFileFinal(String title) throws RemoteException {
         File folder = new File("Storage-Server");
         String path = "Storage-Server";
         File[] listOfFiles = folder.listFiles();
         path = searchFile(listOfFiles, path, title);
         byte buffer[] = null;
-         
+        
         if (path!=null){
             File objective = new File(path);
             buffer = new byte[(int) objective.length()];
@@ -56,18 +69,9 @@ public class RMIServerImplementation extends UnicastRemoteObject
             }
         }
         // Handles multiple servers download
-        for(Map.Entry<RMIServerInterface,String> server : servers.entrySet()){
-            if(!server.getValue().equals(caller)){
-                System.out.println("Searching in Server:" + server);
-                buffer = server.getKey().downloadFile(title, this.server.name);
-            }
-            if (buffer != null){
-                return buffer;
-            }
-        }
-        return null;
+        return null;	
     }
-        
+    
     public String searchFile(File[] listOfFiles, String path, String title) {
         // Search a title in a list of files and returns the path of it
         String found = null;
@@ -97,7 +101,9 @@ public class RMIServerImplementation extends UnicastRemoteObject
         File dir = new File("Storage-Server/" + uniqueID);
         dir.mkdir();
         String path = "Storage-Server/" + uniqueID + "/" + f.getTitle();
-
+        f.setServer(server.name);
+        f.setId(uniqueID);
+        
         try {
             // All the information about the uploads will be stored
             // on the data base
@@ -122,7 +128,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
     public void addToDataBase(LocalFile f) 
     		throws IOException{
     	 try {
-             URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/upload/");
+             URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/files/");
              HttpURLConnection conn = (HttpURLConnection) url.openConnection();
              conn.setDoOutput(true);
              conn.setRequestMethod("POST");
@@ -146,102 +152,11 @@ public class RMIServerImplementation extends UnicastRemoteObject
          }  
     }
     
-    // NOT USED ANYMORE
-    public void addToLibrary(String title, String path, String user, String tags) 
-            throws IOException {
-        // Adds the information about the upload to the registry file (library)
-        FileWriter fw = new FileWriter("Storage-Server/config/library", true);
-        BufferedWriter bw = new BufferedWriter(fw);
 
-        bw.write(title);
-        bw.newLine();
-        bw.write(user);
-        bw.newLine();
-        bw.write(path);
-        bw.newLine();
-        bw.write(tags);
-        bw.newLine();
-
-        bw.close();
-    }
-
-    public Map readLibrary() throws FileNotFoundException, IOException {
-        // Reads the file library (where all the information about the uploads is saved)
-        FileReader fr = new FileReader("Storage-Server/config/library");
-        BufferedReader br = new BufferedReader(fr);
-
-        String line = br.readLine();
-        Map<String, ArrayList> library = new HashMap<>();
-        String title = null;
-        while (line != null) {
-            ArrayList<Object> info = new ArrayList<>();
-            for (int i = 0; i < 4; i++) {
-                if (i == 0) {
-                    title = line;
-                }
-                info.add(line);
-                line = br.readLine();
-            }
-            library.put(title, info);
-        }
-        br.close();
-        fr.close();
-        // Returns a Map with the title and the content of every upload made by a client
-        return library;
-    }
-    
-        public void updateLibrary(Map<String, ArrayList> library) 
-                throws FileNotFoundException, IOException {
-        // Update the file library, after deleting an element
-        PrintWriter writer = new PrintWriter("Storage-Server/config/library");
-        writer.print("");
-        writer.close();
-        
-        for(Map.Entry<String, ArrayList> entry : library.entrySet()){
-            String title = String.valueOf(entry.getValue().get(0));
-            String path = String.valueOf(entry.getValue().get(1));
-            String user = String.valueOf(entry.getValue().get(2));
-            String tags = String.valueOf(entry.getValue().get(3));
-            addToLibrary(title, path, user, tags);
-        }
-    }
 
     @Override
-    public List searchFiles(String tags, String caller) throws RemoteException {
-        Map<String, ArrayList> library;
-        List<String> result = new ArrayList();
-        String[] tagslist = tags.split("[ ,]");
-        
-        try {
-            library = readLibrary();
-            for (Map.Entry<String, ArrayList> entry : library.entrySet()) {
-                // The 3rd position of the value will be the TAG field
-                String[] tagsfile = String.valueOf(entry.getValue().get(3))
-                        .split("[ ,]");
-                Boolean found = true;
-
-                for(String tag : tagslist){
-                    if (!Arrays.asList(tagsfile).contains(tag)) {
-                        found = false;
-                    }
-                }
-                if(found){
-                    result.add(String.valueOf(entry.getValue().get(0)));
-                }
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(RMIServerImplementation.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
-
-        // Handles the search on multiple servers
-        for(Map.Entry<RMIServerInterface,String> server : servers.entrySet()){
-            if(!server.getValue().equals(caller)){
-                System.out.println("Searching Tags in Server:" + server);
-                result.addAll(server.getKey().searchFiles(tags, this.server.name));
-            }
-        }      
-        return result;
+    public List<String> searchFiles(String tags) throws RemoteException {
+        return null;
     }
     
     @Override
@@ -324,6 +239,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
 
     }
     
+    
     @Override
     public int registerUser(UserClass user) {
     	try{
@@ -367,6 +283,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
 	        conn.setRequestProperty("Content-Type", "application/json");
 	        
 	        String input = server.getJson();
+	        
 	        OutputStream os = conn.getOutputStream();
 	        os.write(input.getBytes());
 	        os.flush();
@@ -414,7 +331,7 @@ public class RMIServerImplementation extends UnicastRemoteObject
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
 			if(conn.getResponseCode() != 200)
-				return new LocalFile("","","","","");
+				return null;
 			
 			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			String output = br.readLine();
@@ -423,6 +340,26 @@ public class RMIServerImplementation extends UnicastRemoteObject
 			Gson g = new Gson();
 			LocalFile f = g.fromJson(output, LocalFile.class);
 			return f;
+					
+		} catch (Exception e) { return null; }
+    }
+    
+    public ServerClass getServer(String name){
+    	try {
+			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/server/" + name);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
+			if(conn.getResponseCode() != 200)
+				return null;
+			
+			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			String output = br.readLine();
+			conn.disconnect();
+			
+			Gson g = new Gson();
+			ServerClass s = g.fromJson(output, ServerClass.class);
+			return s;
 					
 		} catch (Exception e) { return null; }
     }
@@ -444,4 +381,13 @@ public class RMIServerImplementation extends UnicastRemoteObject
         System.out.println("Client " + clients.get(client) + " --> disconnected");
         clients.remove(client);    
     }
+    
+   
+    public RMIServerInterface getRMIserver(ServerClass server) throws RemoteException, 
+    NotBoundException, MalformedURLException{
+        String registryURL = "rmi://" + server.getIp() + ":" + server.getPort() + "/some";
+        RMIServerInterface objective = (RMIServerInterface) Naming.lookup(registryURL);
+        return objective;    
+    }
+    
 }

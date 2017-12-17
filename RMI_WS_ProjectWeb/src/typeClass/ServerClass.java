@@ -1,4 +1,4 @@
-package rmi;
+package typeClass;
 
 public class ServerClass {
 	public String name;

@@ -2,18 +2,23 @@ package rmi;
 // file: SomeInterface.java
 // to be implemented by a Java RMI server class.
 
+import java.net.MalformedURLException;
 import java.rmi.*;
 import java.util.List;
 
+import typeClass.LocalFile;
+import typeClass.ServerClass;
+import typeClass.UserClass;
+
 public interface RMIServerInterface extends Remote {
 
-    public byte[] downloadFile(String content, String server)
+    public byte[] downloadFile(String content)
             throws java.rmi.RemoteException;
 
     public void saveFile(byte[] file, LocalFile f, RMIClientInterface cinter)
             throws java.rmi.RemoteException;
 
-    public List searchFiles(String tags, String caller)
+    public List searchFiles(String tags)
             throws java.rmi.RemoteException;
 
     public Boolean deleteFile(String file, String user)
@@ -36,4 +41,6 @@ public interface RMIServerInterface extends Remote {
 
     public void registerServer()
             throws java.rmi.RemoteException;
+    
+    public byte[] downloadFileFinal(String title) throws java.rmi.RemoteException;
 }

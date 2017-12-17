@@ -1,4 +1,4 @@
-package rmi;
+package typeClass;
 
 import java.io.Serializable;
 

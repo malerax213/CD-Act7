@@ -21,6 +21,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import rmi.*;
+import typeClass.LocalFile;
+import typeClass.ServerClass;
+import typeClass.UserClass;
 
 @RequestScoped
 @Path("")
@@ -45,7 +48,7 @@ public class WS {
 	
 	// POST a File to Database
 	@POST
-	@Path("/upload")
+	@Path("/files")
 	public Response addToDataBase(LocalFile f) throws SQLException {
 		//try {
 			Statement st = getStatement();
@@ -73,16 +76,43 @@ public class WS {
 	public Response postServer(ServerClass s) {
 		try {
 			Statement st = getStatement();
-			String id = UUID.randomUUID().toString();
 			
 			st.executeUpdate("INSERT INTO servers(name, ip, port) VALUES("
 							+ "'" + s.getName() + "'," 
 							+ "'" + s.getIp() +  "',"
 							+ "'" + s.getPort() +  "');");
-			return Response.status(201).entity(id).build();
+			st.close();
+			return Response.status(201).entity(s.getName()).build();
 			
 		} catch (SQLException e) {
 			return Response.status(500).entity("Database ERROR").build();
+		}
+	}
+	
+	// GET Server
+	@GET
+	@Path("/server/{name}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getServer(@PathParam("name") String name){	 
+		try {
+			Statement state = getStatement();
+			ResultSet resset = state.executeQuery("SELECT name,ip,port FROM server "
+					+ "WHERE name='" + name + "';");
+			ServerClass server = new ServerClass();
+			
+			if(!resset.isBeforeFirst())
+				return Response.status(404).entity("server not found").build();
+			else{
+				resset.next();
+				server.setName(resset.getString("name"));
+				server.setIp(resset.getString("ip"));
+				server.setPort(resset.getString("port"));
+			}
+			state.close();
+			return Response.status(200).entity(server).build();
+			
+		} catch (SQLException e) {
+			return Response.status(500).entity("Database ERROR" + e.toString()).build();
 		}
 	}
 	
@@ -127,6 +157,7 @@ public class WS {
 			st.executeUpdate("INSERT INTO users(name,pass) VALUES("
 							+ "'" + user.getTitle() + "'," 
 							+ "'" + user.getUser() + "');");
+			st.close();
 			return Response.status(201).build();
 			
 		} catch (SQLException e) {
