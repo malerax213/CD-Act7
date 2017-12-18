@@ -185,7 +185,7 @@ public class WS {
 	@GET
 	@Path("/file/{title}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getVideo(@PathParam("title") String title){	 
+	public Response getFile(@PathParam("title") String title){	 
 		try {
 			Statement st = getStatement();
 			ResultSet rs = st.executeQuery("SELECT tags, title, server, ids, users FROM files "
