@@ -1,10 +1,10 @@
 package rest_WS;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.*;
 import java.util.UUID;
 
 import javax.enterprise.context.RequestScoped;
@@ -20,7 +20,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import rmi.*;
 import typeClass.LocalFile;
 import typeClass.ServerClass;
 import typeClass.UserClass;
@@ -66,10 +65,10 @@ public class WS {
 	        } 
 
 			st.close();
-			return Response.status(201).entity(id).build();
-
+			return Response.status(201).entity(id).build();	
 	}
-
+	
+	
 	// POST a Server to database
 	@POST
 	@Path("/servers")
@@ -191,6 +190,7 @@ public class WS {
 			ResultSet rs = st.executeQuery("SELECT tags, title, server, ids, users FROM files "
 					+ "WHERE title='" + title + "';");
 			LocalFile f = new LocalFile();
+			
 			if(!rs.isBeforeFirst()){
 				return Response.status(404).entity("File not found").build();
 			}else{
@@ -207,6 +207,32 @@ public class WS {
 			
 		} catch (SQLException e) {
 			return Response.status(500).entity("Database ERROR" + e.toString()).build();
+		}
+	}
+	
+	@GET
+	@Path("/files")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllFiles(){	 
+		try {
+			Statement st = getStatement();
+			ResultSet rs = st.executeQuery("SELECT title, ids, users, server, tags FROM files;");
+			List<LocalFile> allfiles = new ArrayList<>();
+			
+			while(rs.next()){		
+				LocalFile f = new LocalFile();
+				f.setTitle(rs.getString("title"));
+				f.setId(rs.getString("ids"));
+				f.setUser(rs.getString("users"));
+				f.setServer(rs.getString("server"));
+				f.setTags(rs.getString("tags"));
+				allfiles.add(f);
+			}
+			st.close();
+			return Response.status(200).entity(allfiles).build();
+			
+		} catch (SQLException e) {
+			return Response.status(500).entity("Database ERROR").build();
 		}
 	}
 	

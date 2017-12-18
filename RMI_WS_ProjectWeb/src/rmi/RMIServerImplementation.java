@@ -156,8 +156,53 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
 
     @Override
     public List<String> searchFiles(String tags) throws RemoteException {
-        return null;
+    	LocalFile[] allfiles = getAllFiles();
+    	
+        List<String> result = new ArrayList();
+        String[] tagslist = tags.split("[ ,]");
+        for (LocalFile file : allfiles) {
+        	String[] tagsfile = file.getTags().split("[ ,]");
+		    Boolean found = true;
+		    
+		    for(String tag : tagslist){
+		        if (!Arrays.asList(tagsfile).contains(tag)) {
+		            found = false;
+		        }
+		    }
+		    if(found){
+		        result.add(file.getTitle());
+		    }
+		}
+        return result;
     }
+    
+    
+    public LocalFile[] getAllFiles(){
+    	try {
+			
+			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/files/");
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
+		
+			if(conn.getResponseCode() != 200){
+				return null;
+			}
+
+			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			String output = br.readLine();
+			conn.disconnect();
+			
+			Gson g = new Gson();
+			LocalFile[] allfiles = g.fromJson(output, LocalFile[].class);
+
+			return allfiles;
+        } catch (IOException ex) {
+        	return null;
+        }  
+			
+    }
+    
     
     @Override
     public Boolean deleteFile(String file, String user){
@@ -165,7 +210,6 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
         // If the file is in the DB
     	LocalFile f = getFile(file);
         if (f.getTitle().equals(file)){
-        	System.out.println("entro2");
             System.out.println("Eliminated: "+f.getTitle());
 
             File tmp = new File(f.getTitle());
@@ -385,9 +429,15 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
    
     public RMIServerInterface getRMIserver(ServerClass server) throws RemoteException, 
     NotBoundException, MalformedURLException{
-        String registryURL = "rmi://" + server.getIp() + ":" + server.getPort() + "/some";
-        RMIServerInterface objective = (RMIServerInterface) Naming.lookup(registryURL);
-        return objective;    
+        String registryURL = "rmi://" + server.getIp().replace(" ","") + ":" + server.getPort().replace(" ","") + "/some";
+		try {
+	        RMIServerInterface objective = (RMIServerInterface) Naming.lookup(registryURL);
+	        return objective; 
+		} catch (Exception e) {
+			return null;
+		}
+        
+   
     }
     
 }
