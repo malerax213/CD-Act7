@@ -96,7 +96,7 @@ public class WS {
 	public Response getServer(@PathParam("name") String name){	 
 		try {
 			Statement state = getStatement();
-			ResultSet resset = state.executeQuery("SELECT name,ip,port FROM server "
+			ResultSet resset = state.executeQuery("SELECT name,ip,port FROM servers "
 					+ "WHERE name='" + name + "';");
 			ServerClass server = new ServerClass();
 			
