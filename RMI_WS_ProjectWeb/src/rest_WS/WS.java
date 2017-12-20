@@ -142,6 +142,32 @@ public class WS {
 		}
 	}
 	
+	// GET ID
+	@GET
+	@Path("/ID/{title}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getID(@PathParam("title") String title){	 
+		try {
+			Statement state = getStatement();
+			ResultSet resset = state.executeQuery("SELECT ids FROM files "
+					+ "WHERE title='" + title + "';");
+			String result;
+			
+			if(!resset.isBeforeFirst())
+				return Response.status(404).entity("File not found").build();
+			else{
+				resset.next();
+				result = resset.getString("ids").replaceAll("\\s", "");
+;
+			}
+			state.close();
+			return Response.status(200).entity(result).build();
+			
+		} catch (SQLException e) {
+			return Response.status(500).entity("Database ERROR" + e.toString()).build();
+		}
+	}
+	
 	// POST USER
 	@POST
 	@Path("/user")

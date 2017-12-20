@@ -161,6 +161,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
         List<String> result = new ArrayList();
         String[] tagslist = tags.split("[ ,]");
         for (LocalFile file : allfiles) {
+        	System.out.println(file.getTags());
         	String[] tagsfile = file.getTags().split("[ ,]");
 		    Boolean found = true;
 		    
@@ -195,7 +196,6 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
 			
 			Gson g = new Gson();
 			LocalFile[] allfiles = g.fromJson(output, LocalFile[].class);
-
 			return allfiles;
         } catch (IOException ex) {
         	return null;
@@ -212,13 +212,12 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
         if (f.getTitle().equals(file)){
             System.out.println("Eliminated: "+f.getTitle());
 
-            File tmp = new File(f.getTitle());
+            String uniqueID = getID(file).toString();
+            String path = "Storage-Server/" + uniqueID + "/" + file;
+            File tmp = new File(path);
+            File folder = new File("Storage-Server/" + getID(f.getTitle()));
             tmp.delete();
-            
-            // FALTA ARREGLAR ESTAS LINEAS
-            //String path = String.valueOf(info.get(2)).replace("/"+file,"");
-            //tmp = new File(path);
-            //tmp.delete();
+            folder.delete();
             
             // Deleting the file from the data base
             if(deleteFileByTitle(file) == 0){
@@ -235,6 +234,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
           }
 
     }
+
     
     @Override
     public int deleteFileByTitle(String title){
@@ -346,6 +346,27 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
 	    }  
     }
     
+    public String getID(String title){
+		try {
+			
+			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/ID/" + title);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
+			if(conn.getResponseCode() != 200)
+				return null;
+			
+			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			String output = br.readLine();
+			conn.disconnect();
+
+			return output;
+					
+		} catch (Exception e) { 
+			return null; 
+		}
+	}
+    
     public UserClass getUser(String name){
 		try {
 			
@@ -375,7 +396,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
 			if(conn.getResponseCode() != 200)
-				return null;
+				return new LocalFile("","","","","");
 			
 			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			String output = br.readLine();
