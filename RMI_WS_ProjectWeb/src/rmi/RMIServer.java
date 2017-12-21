@@ -18,9 +18,13 @@ public class RMIServer {
         File dir = new File("Storage-Server");
         dir.mkdir();
         
+        Scanner reader = new Scanner(System.in);
+        System.out.println("Address for web service:");
+        String ws = reader.nextLine();
+        
         try {
             RMIServerImplementation self = confServer();
-            self.registerServer();
+            self.registerServer(ws);
         } catch (Exception ex) {
             System.out.println("An error has been found\n" + ex);
         }

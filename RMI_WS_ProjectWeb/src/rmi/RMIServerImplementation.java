@@ -27,6 +27,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
 	Map<RMIClientInterface, String> clients = new HashMap<>();    // Will contain all the clients
     Map<RMIServerInterface, String> servers = new HashMap<>();    // Will contain all the servers
     ServerClass server;
+    String ws;
     
     public RMIServerImplementation() throws RemoteException {
         super();
@@ -128,7 +129,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
     public void addToDataBase(LocalFile f) 
     		throws IOException{
     	 try {
-             URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/files/");
+             URL url = new URL ("http://"+this.ws+":8080/RMI_WS_ProjectWeb/rest/files/");
              HttpURLConnection conn = (HttpURLConnection) url.openConnection();
              conn.setDoOutput(true);
              conn.setRequestMethod("POST");
@@ -155,13 +156,12 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
 
 
     @Override
-    public List<String> searchFiles(String tags) throws RemoteException {
+    public List<String> searchTags(String tags) throws RemoteException {
     	LocalFile[] allfiles = getAllFiles();
     	
         List<String> result = new ArrayList();
         String[] tagslist = tags.split("[ ,]");
         for (LocalFile file : allfiles) {
-        	System.out.println(file.getTags());
         	String[] tagsfile = file.getTags().split("[ ,]");
 		    Boolean found = true;
 		    
@@ -181,7 +181,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
     public LocalFile[] getAllFiles(){
     	try {
 			
-			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/files/");
+			URL url = new URL ("http://"+this.ws+":8080/RMI_WS_ProjectWeb/rest/files/");
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
@@ -239,7 +239,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
     @Override
     public int deleteFileByTitle(String title){
         try {
-            URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/file/" + title + "/delete");
+            URL url = new URL ("http://"+this.ws+":8080/RMI_WS_ProjectWeb/rest/file/" + title + "/delete");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("DELETE");
@@ -287,7 +287,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
     @Override
     public int registerUser(UserClass user) {
     	try{
-	    	URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/user");
+	    	URL url = new URL ("http://"+this.ws+":8080/RMI_WS_ProjectWeb/rest/user");
 	        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 	        conn.setDoOutput(true);
 	        conn.setRequestMethod("POST");
@@ -318,9 +318,10 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
     }
     
     @Override
-    public void registerServer() {
-	    try {
-	        URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/servers/");
+    public void registerServer(String ws) {
+	    this.ws = ws;
+    	try {
+	        URL url = new URL ("http://"+this.ws+":8080/RMI_WS_ProjectWeb/rest/servers/");
 	        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 	        conn.setDoOutput(true);
 	        conn.setRequestMethod("POST");
@@ -331,8 +332,6 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
 	        OutputStream os = conn.getOutputStream();
 	        os.write(input.getBytes());
 	        os.flush();
-	        
-	        System.out.println("Server?");
 	        
 	        int status = conn.getResponseCode();
 	        if(status != HttpURLConnection.HTTP_CREATED){ 
@@ -349,7 +348,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
     public String getID(String title){
 		try {
 			
-			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/ID/" + title);
+			URL url = new URL ("http://"+this.ws+":8080/RMI_WS_ProjectWeb/rest/ID/" + title);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
@@ -370,7 +369,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
     public UserClass getUser(String name){
 		try {
 			
-			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/user/" + name);
+			URL url = new URL ("http://"+this.ws+":8080/RMI_WS_ProjectWeb/rest/user/" + name);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
@@ -391,7 +390,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
     
     public LocalFile getFile(String title){
     	try {
-			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/file/" + title);
+			URL url = new URL ("http://"+this.ws+":8080/RMI_WS_ProjectWeb/rest/file/" + title);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
@@ -411,7 +410,7 @@ public class RMIServerImplementation extends UnicastRemoteObject implements RMIS
     
     public ServerClass getServer(String name){
     	try {
-			URL url = new URL ("http://localhost:8080/RMI_WS_ProjectWeb/rest/server/" + name);
+			URL url = new URL ("http://"+this.ws+":8080/RMI_WS_ProjectWeb/rest/server/" + name);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
